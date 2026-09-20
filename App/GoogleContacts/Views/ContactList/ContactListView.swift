@@ -17,6 +17,8 @@ struct ContactListView: View {
         switch filter {
         case .all: byFilter = base
         case .starred: byFilter = base.filter(\.isStarred)
+        case .peopleContacts: byFilter = base.filter { !$0.givenName.isEmpty && !$0.familyName.isEmpty }
+        case .organizationContacts: byFilter = base.filter { $0.givenName.isEmpty && $0.familyName.isEmpty && !$0.organizations.isEmpty }
         case .group(let group): byFilter = base.filter { $0.memberships.contains { $0.resourceName == group.resourceName } }
         }
         guard !searchText.isEmpty else { return byFilter }
@@ -67,6 +69,8 @@ struct ContactListView: View {
         switch filter {
         case .all: "All Contacts"
         case .starred: "Starred"
+        case .peopleContacts: "People Contacts"
+        case .organizationContacts: "Organization Contacts"
         case .group(let group): group.name
         }
     }

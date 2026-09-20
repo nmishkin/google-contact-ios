@@ -5,6 +5,8 @@ import GoogleContactsKit
 enum SidebarFilter: Hashable {
     case all
     case starred
+    case peopleContacts
+    case organizationContacts
     case group(ContactGroup)
 }
 

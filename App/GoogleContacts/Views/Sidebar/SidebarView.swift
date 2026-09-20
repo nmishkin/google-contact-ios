@@ -18,6 +18,8 @@ struct SidebarView: View {
     var body: some View {
         List(selection: optionalSelection) {
             Label("All Contacts", systemImage: "person.2").tag(SidebarFilter.all)
+            Label("People Contacts", systemImage: "person").tag(SidebarFilter.peopleContacts)
+            Label("Organization Contacts", systemImage: "building.2").tag(SidebarFilter.organizationContacts)
             Label("Starred", systemImage: "star.fill").tag(SidebarFilter.starred)
             Section("Labels") {
                 ForEach(labels) { group in
