@@ -15,9 +15,10 @@ public final class UserDefaultsSyncTokenStore: SyncTokenStoring, @unchecked Send
 }
 
 public actor SyncEngine {
-    private let modelContainer: ModelContainer
+    let modelContainer: ModelContainer
     let apiClient: PeopleAPIClientProtocol
     private let syncTokenStore: SyncTokenStoring
+    let conflictRegistry = ConflictRegistry()
 
     public init(modelContainer: ModelContainer, apiClient: PeopleAPIClientProtocol, syncTokenStore: SyncTokenStoring = UserDefaultsSyncTokenStore()) {
         self.modelContainer = modelContainer
