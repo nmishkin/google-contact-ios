@@ -40,5 +40,8 @@ targets:
     platform: iOS
     deploymentTarget: "17.0"
     sources: [App/GoogleContactsUITests]
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      TEST_TARGET_NAME: GoogleContacts_iOS
     dependencies:
       - target: GoogleContacts_iOS

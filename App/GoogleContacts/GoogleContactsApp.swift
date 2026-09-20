@@ -5,6 +5,8 @@ struct GoogleContactsApp: App {
     @StateObject private var auth = GoogleSignInAuthProvider()
     @State private var environment: AppEnvironment?
 
+    private var isUITesting: Bool { ProcessInfo.processInfo.arguments.contains("UI_TESTING") }
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -19,8 +21,14 @@ struct GoogleContactsApp: App {
                 }
             }
             .task {
-                await auth.restorePreviousSignIn()
-                if environment == nil { environment = AppEnvironment(auth: auth) }
+                if isUITesting {
+                    environment = AppEnvironment(auth: FakeUITestAuth(), apiClientOverride: SeededFakeAPIClient())
+                    auth.isSignedIn = true
+                    try? await environment?.syncEngine.fullSync()
+                } else {
+                    await auth.restorePreviousSignIn()
+                    if environment == nil { environment = AppEnvironment(auth: auth) }
+                }
             }
             .onChange(of: auth.isSignedIn) { _, signedIn in
                 if signedIn, environment == nil { environment = AppEnvironment(auth: auth) }
