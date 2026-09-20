@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import GoogleContactsKit
 
 struct ContactEditView: View {
@@ -6,6 +7,8 @@ struct ContactEditView: View {
     let existingContact: Contact?
     @EnvironmentObject private var environment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
+    @Query(filter: #Predicate<ContactGroup> { $0.groupType == "USER_CONTACT_GROUP" }, sort: \ContactGroup.name)
+    private var allLabels: [ContactGroup]
 
     @State private var givenName = ""
     @State private var familyName = ""
@@ -46,6 +49,20 @@ struct ContactEditView: View {
                 }
                 Section("Notes") {
                     TextEditor(text: $notes).frame(minHeight: 80)
+                }
+                if existingContact != nil {
+                    Section("Labels") {
+                        ForEach(allLabels) { group in
+                            let isMember = existingContact?.memberships.contains { $0.resourceName == group.resourceName } ?? false
+                            Toggle(group.name, isOn: Binding(
+                                get: { isMember },
+                                set: { newValue in
+                                    guard let contact = existingContact else { return }
+                                    try? environment.repository.setLabel(group, on: contact, isMember: newValue)
+                                }
+                            ))
+                        }
+                    }
                 }
             }
             .navigationTitle(existingContact == nil ? "New Contact" : "Edit Contact")

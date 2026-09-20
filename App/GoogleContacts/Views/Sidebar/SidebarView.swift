@@ -22,6 +22,7 @@ struct SidebarView: View {
                 ForEach(labels) { group in
                     Label(group.name, systemImage: "tag").tag(SidebarFilter.group(group))
                 }
+                NavigationLink("Edit Labels") { LabelsManagementView() }
             }
         }
         .navigationTitle("Google Contacts")
