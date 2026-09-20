@@ -29,7 +29,14 @@ public actor SyncEngine {
     public func fullSync() async throws {
         let context = ModelContext(modelContainer)
 
-        let groupDTOs = try await apiClient.listContactGroups()
+        // Groups are fetched best-effort: a groups-specific failure (e.g. insufficient scope for
+        // that endpoint) shouldn't block syncing contacts, which is the primary thing users need.
+        var groupDTOs: [ContactGroupDTO] = []
+        do {
+            groupDTOs = try await apiClient.listContactGroups()
+        } catch {
+            print("⚠️ listContactGroups failed, continuing without groups: \(error)")
+        }
         var groupsByResourceName: [String: ContactGroup] = [:]
         let existingGroups = try context.fetch(FetchDescriptor<ContactGroup>())
         var existingGroupsByResourceName = Dictionary(uniqueKeysWithValues: existingGroups.map { ($0.resourceName, $0) })

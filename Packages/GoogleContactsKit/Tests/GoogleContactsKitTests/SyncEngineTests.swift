@@ -9,6 +9,7 @@ final class FakePeopleAPIClient: PeopleAPIClientProtocol, @unchecked Sendable {
     var groups: [ContactGroupDTO] = []
     var throwExpiredOnNextCall = false
     var listConnectionsCallCount = 0
+    var throwOnListContactGroups: (any Error)?
 
     func listConnections(pageToken: String?, syncToken: String?) async throws -> ListConnectionsResponseDTO {
         listConnectionsCallCount += 1
@@ -22,7 +23,10 @@ final class FakePeopleAPIClient: PeopleAPIClientProtocol, @unchecked Sendable {
         return ListConnectionsResponseDTO(connections: page, nextPageToken: isLast ? nil : String(pageIndex + 1), nextSyncToken: isLast ? syncTokenToReturn : nil, totalItems: nil)
     }
 
-    func listContactGroups() async throws -> [ContactGroupDTO] { groups }
+    func listContactGroups() async throws -> [ContactGroupDTO] {
+        if let error = throwOnListContactGroups { throw error }
+        return groups
+    }
     func createContact(_ person: PersonDTO) async throws -> PersonDTO { person }
     func updateContact(_ person: PersonDTO, updateFieldMask: String) async throws -> PersonDTO { person }
     func deleteContact(resourceName: String) async throws {}
@@ -120,5 +124,20 @@ struct SyncEngineTests {
         #expect(api.listConnectionsCallCount == 2) // first call throws expired, second is the full-sync retry
         let context = ModelContext(container)
         #expect(try context.fetch(FetchDescriptor<Contact>()).count == 1)
+    }
+
+    @Test func fullSyncStillSyncsContactsWhenListContactGroupsFails() async throws {
+        let container = try makeContainer()
+        let api = FakePeopleAPIClient()
+        api.throwOnListContactGroups = PeopleAPIError.http(status: 403, message: "insufficient scope")
+        api.connectionsPages = [[ConnectionDTO(resourceName: "people/c1", etag: "e1", names: [NameDTO(givenName: "Ada")])]]
+        let engine = SyncEngine(modelContainer: container, apiClient: api, syncTokenStore: InMemorySyncTokenStore())
+
+        try await engine.fullSync() // must not throw even though the groups call failed
+
+        let context = ModelContext(container)
+        let contacts = try context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        #expect(contacts.first?.givenName == "Ada")
     }
 }
