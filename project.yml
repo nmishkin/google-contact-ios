@@ -1,0 +1,44 @@
+name: GoogleContacts
+options:
+  bundleIdPrefix: com.mishkin
+  deploymentTarget:
+    iOS: "17.0"
+    macOS: "14.0"
+packages:
+  GoogleContactsKit:
+    path: Packages/GoogleContactsKit
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 7.1.0
+targets:
+  GoogleContacts:
+    type: application
+    platform: [iOS, macOS]
+    deploymentTarget:
+      iOS: "17.0"
+      macOS: "14.0"
+    sources: [App/GoogleContacts]
+    info:
+      path: App/GoogleContacts/Info.plist
+      properties:
+        UILaunchScreen: {}
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - "$(GOOGLE_REVERSED_CLIENT_ID)"
+        GIDClientID: "$(GOOGLE_CLIENT_ID)"
+    entitlements:
+      path: App/GoogleContacts/GoogleContacts.entitlements
+      properties: {}
+    dependencies:
+      - package: GoogleContactsKit
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+  GoogleContactsUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [App/GoogleContactsUITests]
+    dependencies:
+      - target: GoogleContacts_iOS
