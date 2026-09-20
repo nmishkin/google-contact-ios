@@ -25,10 +25,28 @@ final class AppEnvironment: ObservableObject {
         self.repository = ContactsRepository(modelContainer: container, syncEngine: engine, apiClient: apiClient)
     }
 
+    /// Wipes all locally cached Google data. Called on sign-out per the design spec: Google's
+    /// data shouldn't linger locally once signed out.
+    func wipeLocalData() throws {
+        let context = modelContainer.mainContext
+        try context.delete(model: PendingMutation.self)
+        try context.delete(model: Contact.self) // cascades to emails/phones/addresses/etc.
+        try context.delete(model: ContactGroup.self)
+        try context.save()
+    }
+
     func syncOnForeground() {
         Task {
-            try? await syncEngine.incrementalSync()
-            try? await syncEngine.drainOutbox()
+            do {
+                try await syncEngine.incrementalSync()
+            } catch {
+                print("⚠️ incrementalSync failed: \(error)")
+            }
+            do {
+                try await syncEngine.drainOutbox()
+            } catch {
+                print("⚠️ drainOutbox failed: \(error)")
+            }
         }
     }
 }

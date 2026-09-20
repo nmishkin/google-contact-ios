@@ -1,5 +1,16 @@
 import SwiftUI
 
+private struct SignOutActionKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
+
+extension EnvironmentValues {
+    var signOut: () -> Void {
+        get { self[SignOutActionKey.self] }
+        set { self[SignOutActionKey.self] = newValue }
+    }
+}
+
 @main
 struct GoogleContactsApp: App {
     @StateObject private var auth = GoogleSignInAuthProvider()
@@ -14,6 +25,7 @@ struct GoogleContactsApp: App {
                     RootSplitView()
                         .environmentObject(environment)
                         .modelContainer(environment.modelContainer)
+                        .environment(\.signOut, signOut)
                 } else if auth.isSignedIn {
                     ProgressView()
                 } else {
@@ -34,5 +46,11 @@ struct GoogleContactsApp: App {
                 if signedIn, environment == nil { environment = AppEnvironment(auth: auth) }
             }
         }
+    }
+
+    private func signOut() {
+        auth.signOut()
+        try? environment?.wipeLocalData()
+        environment = nil
     }
 }
