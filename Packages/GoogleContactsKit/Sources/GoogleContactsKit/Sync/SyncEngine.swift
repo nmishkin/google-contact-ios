@@ -44,10 +44,10 @@ public actor SyncEngine {
             if let group = existingGroupsByResourceName[dto.resourceName] {
                 group.name = dto.name
                 group.groupType = dto.groupType
-                group.etag = dto.etag
+                group.etag = dto.etag ?? ""
                 groupsByResourceName[dto.resourceName] = group
             } else {
-                let group = ContactGroup(resourceName: dto.resourceName, name: dto.name, groupType: dto.groupType, etag: dto.etag)
+                let group = ContactGroup(resourceName: dto.resourceName, name: dto.name, groupType: dto.groupType, etag: dto.etag ?? "")
                 context.insert(group)
                 groupsByResourceName[dto.resourceName] = group
                 existingGroupsByResourceName[dto.resourceName] = group

@@ -259,13 +259,13 @@ public struct ListConnectionsResponseDTO: Codable, Equatable, Sendable {
 
 public struct ContactGroupDTO: Codable, Equatable, Sendable {
     public var resourceName: String
-    public var etag: String
+    public var etag: String? // absent for some system groups (observed on "Other Contacts")
     public var name: String
     public var formattedName: String?
     public var groupType: String
     public var memberCount: Int?
 
-    public init(resourceName: String, etag: String, name: String, formattedName: String? = nil, groupType: String, memberCount: Int? = nil) {
+    public init(resourceName: String, etag: String? = nil, name: String, formattedName: String? = nil, groupType: String, memberCount: Int? = nil) {
         self.resourceName = resourceName
         self.etag = etag
         self.name = name

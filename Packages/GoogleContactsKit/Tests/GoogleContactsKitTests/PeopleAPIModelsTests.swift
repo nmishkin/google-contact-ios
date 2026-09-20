@@ -33,8 +33,19 @@ struct PeopleAPIModelsTests {
         let data = try loadFixture("contact_group_list")
         let list = try JSONDecoder().decode(ListContactGroupsResponseDTO.self, from: data)
 
-        #expect(list.contactGroups.count == 3)
+        #expect(list.contactGroups.count == 4)
         #expect(list.contactGroups.first { $0.resourceName == "contactGroups/abcd1234" }?.groupType == "USER_CONTACT_GROUP")
+    }
+
+    @Test func decodesContactGroupMissingEtag() throws {
+        // Real Google People API responses omit `etag` for some system groups (observed for
+        // "Other Contacts" in production); decoding must not fail because of it.
+        let data = try loadFixture("contact_group_list")
+        let list = try JSONDecoder().decode(ListContactGroupsResponseDTO.self, from: data)
+
+        let otherContacts = list.contactGroups.first { $0.resourceName == "contactGroups/otherContacts" }
+        #expect(otherContacts != nil)
+        #expect(otherContacts?.etag == nil)
     }
 
     @Test func expiredSyncTokenErrorIsRecognized() throws {
