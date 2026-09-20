@@ -34,8 +34,8 @@ struct ContactListView: View {
     var body: some View {
         List(filtered, selection: $selectedContact) { contact in
             NavigationLink(value: contact) {
-                VStack(alignment: .leading) {
-                    Text(primaryLabel(for: contact))
+                VStack(alignment: .leading, spacing: 2) {
+                    primaryLabelText(for: contact)
                         .font(.body)
                     if let subtitle = organizationSubtitle(for: contact) {
                         Text(subtitle).font(.caption).foregroundStyle(.secondary)
@@ -45,7 +45,11 @@ struct ContactListView: View {
             .swipeActions(edge: .trailing) {
                 Button(role: .destructive) { try? environment.repository.delete(contact) } label: { Label("Delete", systemImage: "trash") }
             }
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
         }
+        #if os(iOS)
+        .listRowSpacing(2)
+        #endif
         .searchable(text: $searchText)
         .refreshable { try? await environment.repository.refresh() }
         .navigationTitle(title(for: filter))
@@ -63,6 +67,17 @@ struct ContactListView: View {
         let name = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
         if !name.isEmpty { return name }
         return contact.organizations.first?.name ?? ""
+    }
+
+    /// Bolds the family name when both a given and family name are present; otherwise renders
+    /// the plain fallback label (full name with only one part, or the organization name).
+    private func primaryLabelText(for contact: Contact) -> Text {
+        let given = contact.givenName.trimmingCharacters(in: .whitespaces)
+        let family = contact.familyName.trimmingCharacters(in: .whitespaces)
+        guard !given.isEmpty, !family.isEmpty else {
+            return Text(primaryLabel(for: contact))
+        }
+        return Text("\(given) ") + Text(family).bold()
     }
 
     /// Shows the organization name as a subtitle, unless it's already shown as the primary

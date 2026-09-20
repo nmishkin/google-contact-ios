@@ -28,6 +28,9 @@ struct SidebarView: View {
                 NavigationLink("Edit Labels") { LabelsManagementView() }
             }
         }
+        #if os(iOS)
+        .listRowSpacing(2)
+        #endif
         .navigationTitle("Google Contacts")
         .toolbar {
             ToolbarItem(placement: .automatic) {
