@@ -21,14 +21,14 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+				<string>com.googleusercontent.apps.576878495458-s2jmno6o7fqaqg22a259nhllgqfvff3e</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>GIDClientID</key>
-	<string>$(GOOGLE_CLIENT_ID)</string>
+	<string>576878495458-s2jmno6o7fqaqg22a259nhllgqfvff3e.apps.googleusercontent.com</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

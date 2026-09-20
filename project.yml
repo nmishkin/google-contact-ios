@@ -24,8 +24,8 @@ targets:
         UILaunchScreen: {}
         CFBundleURLTypes:
           - CFBundleURLSchemes:
-              - "$(GOOGLE_REVERSED_CLIENT_ID)"
-        GIDClientID: "$(GOOGLE_CLIENT_ID)"
+              - "${GOOGLE_REVERSED_CLIENT_ID}"
+        GIDClientID: "${GOOGLE_CLIENT_ID}"
     entitlements:
       path: App/GoogleContacts/GoogleContacts.entitlements
       properties: {}
