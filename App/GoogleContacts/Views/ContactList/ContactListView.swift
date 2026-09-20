@@ -33,7 +33,7 @@ struct ContactListView: View {
         List(filtered, selection: $selectedContact) { contact in
             NavigationLink(value: contact) {
                 VStack(alignment: .leading) {
-                    Text("\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces))
+                    Text(primaryLabel(for: contact))
                         .font(.body)
                     if let firstEmail = contact.emails.first {
                         Text(firstEmail.value).font(.caption).foregroundStyle(.secondary)
@@ -55,6 +55,12 @@ struct ContactListView: View {
         .sheet(isPresented: $isPresentingNewContact) {
             ContactEditView()
         }
+    }
+
+    private func primaryLabel(for contact: Contact) -> String {
+        let name = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
+        if !name.isEmpty { return name }
+        return contact.organizations.first?.name ?? ""
     }
 
     private func title(for filter: SidebarFilter) -> String {
