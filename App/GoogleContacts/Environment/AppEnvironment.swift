@@ -15,7 +15,7 @@ final class AppEnvironment: ObservableObject {
     let modelContainer: ModelContainer
     let syncEngine: SyncEngine
     let repository: ContactsRepository
-    @Published var selectedFilter: SidebarFilter = .all
+    @Published var selectedFilter: SidebarFilter = .peopleContacts
 
     init(auth: AuthTokenProviding, apiClientOverride: PeopleAPIClientProtocol? = nil) {
         let schema = Schema([Contact.self, LabeledValue.self, PostalAddress.self, Organization.self, ContactGroup.self, PendingMutation.self])
