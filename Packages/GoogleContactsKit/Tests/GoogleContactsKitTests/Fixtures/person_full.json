@@ -1,0 +1,17 @@
+{
+  "resourceName": "people/c123",
+  "etag": "%EgUBAj0iPRoEAQIFByIMCEs=",
+  "names": [{"metadata": {"primary": true}, "givenName": "Ada", "familyName": "Lovelace", "middleName": "", "phoneticGivenName": "", "phoneticFamilyName": ""}],
+  "nicknames": [{"value": "Ada"}],
+  "emailAddresses": [{"metadata": {"primary": true}, "value": "ada@example.com", "type": "work"}],
+  "phoneNumbers": [{"metadata": {"primary": true}, "value": "+1 555-0100", "type": "mobile"}],
+  "addresses": [{"metadata": {"primary": true}, "type": "home", "streetAddress": "12 Analytical Engine Way", "city": "London", "region": "", "postalCode": "", "country": "UK", "formattedValue": "12 Analytical Engine Way, London, UK"}],
+  "organizations": [{"metadata": {"primary": true}, "name": "Analytical Engines Ltd", "title": "Mathematician", "department": "", "current": true}],
+  "urls": [{"metadata": {"primary": false}, "value": "https://example.com/ada", "type": "homepage"}],
+  "relations": [],
+  "userDefined": [{"key": "Mastodon", "value": "@ada@example.social"}],
+  "birthdays": [{"metadata": {"primary": true}, "date": {"month": 12, "day": 10}}],
+  "biographies": [{"value": "Countess of Lovelace"}],
+  "memberships": [{"contactGroupMembership": {"contactGroupResourceName": "contactGroups/myContacts"}}, {"contactGroupMembership": {"contactGroupResourceName": "contactGroups/starred"}}],
+  "photos": [{"url": "https://example.com/ada.jpg", "metadata": {"primary": true}}]
+}

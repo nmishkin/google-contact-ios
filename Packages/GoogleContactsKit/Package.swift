@@ -9,6 +9,10 @@ let package = Package(
     ],
     targets: [
         .target(name: "GoogleContactsKit"),
-        .testTarget(name: "GoogleContactsKitTests", dependencies: ["GoogleContactsKit"])
+        .testTarget(
+            name: "GoogleContactsKitTests",
+            dependencies: ["GoogleContactsKit"],
+            resources: [.copy("Fixtures")]
+        )
     ]
 )

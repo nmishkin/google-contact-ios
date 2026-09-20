@@ -1,0 +1,9 @@
+{
+  "connections": [
+    {"resourceName": "people/c123", "etag": "e1", "names": [{"metadata": {"primary": true}, "givenName": "Ada", "familyName": "Lovelace"}]},
+    {"resourceName": "people/c124", "etag": "e2", "names": [{"metadata": {"primary": true}, "givenName": "Grace", "familyName": "Hopper"}]}
+  ],
+  "nextPageToken": "",
+  "nextSyncToken": "sync-token-abc123",
+  "totalItems": 2
+}

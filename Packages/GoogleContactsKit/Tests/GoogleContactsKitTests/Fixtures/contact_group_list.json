@@ -1,0 +1,8 @@
+{
+  "contactGroups": [
+    {"resourceName": "contactGroups/myContacts", "etag": "g0", "name": "myContacts", "formattedName": "My Contacts", "groupType": "SYSTEM_CONTACT_GROUP", "memberCount": 2},
+    {"resourceName": "contactGroups/starred", "etag": "g1", "name": "starred", "formattedName": "Starred", "groupType": "SYSTEM_CONTACT_GROUP", "memberCount": 1},
+    {"resourceName": "contactGroups/abcd1234", "etag": "g2", "name": "Friends", "formattedName": "Friends", "groupType": "USER_CONTACT_GROUP", "memberCount": 1}
+  ],
+  "nextPageToken": ""
+}
