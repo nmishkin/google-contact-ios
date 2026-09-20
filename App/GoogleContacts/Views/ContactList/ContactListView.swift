@@ -37,8 +37,8 @@ struct ContactListView: View {
                 VStack(alignment: .leading) {
                     Text(primaryLabel(for: contact))
                         .font(.body)
-                    if let firstEmail = contact.emails.first {
-                        Text(firstEmail.value).font(.caption).foregroundStyle(.secondary)
+                    if let subtitle = organizationSubtitle(for: contact) {
+                        Text(subtitle).font(.caption).foregroundStyle(.secondary)
                     }
                 }
             }
@@ -63,6 +63,14 @@ struct ContactListView: View {
         let name = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
         if !name.isEmpty { return name }
         return contact.organizations.first?.name ?? ""
+    }
+
+    /// Shows the organization name as a subtitle, unless it's already shown as the primary
+    /// label (nameless contacts fall back to the organization name up top).
+    private func organizationSubtitle(for contact: Contact) -> String? {
+        let hasName = !"\(contact.givenName)\(contact.familyName)".trimmingCharacters(in: .whitespaces).isEmpty
+        guard hasName, let organization = contact.organizations.first, !organization.name.isEmpty else { return nil }
+        return organization.name
     }
 
     private func title(for filter: SidebarFilter) -> String {
