@@ -71,6 +71,16 @@ extension SyncEngine {
             contact.etag = created.etag
             contact.isPendingCreate = false
 
+            // Contacts created via the People API don't automatically join the "My Contacts"
+            // system group, so without this they're created successfully but invisible in the
+            // default view at contacts.google.com. Best-effort: the contact itself is already
+            // created, so a failure here shouldn't be treated as the whole mutation failing.
+            do {
+                try await apiClient.modifyGroupMembers(groupResourceName: "contactGroups/myContacts", add: [created.resourceName], remove: [])
+            } catch {
+                print("⚠️ failed to add new contact to myContacts: \(error)")
+            }
+
         case .update(let fieldMask):
             guard let resourceName = mutation.targetResourceName,
                   let contact = try context.fetch(FetchDescriptor<Contact>(predicate: #Predicate { $0.resourceName == resourceName })).first else { return }

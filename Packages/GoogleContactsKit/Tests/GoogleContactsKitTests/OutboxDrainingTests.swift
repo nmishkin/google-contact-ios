@@ -9,6 +9,7 @@ final class RecordingPeopleAPIClient: PeopleAPIClientProtocol, @unchecked Sendab
     var deletedResourceNames: [String] = []
     var nextCreateResourceName = "people/server-assigned-1"
     var updateShouldThrowConflictWithServerName: String?
+    var modifyGroupMembersCalls: [(group: String, add: [String], remove: [String])] = []
 
     func listConnections(pageToken: String?, syncToken: String?) async throws -> ListConnectionsResponseDTO { .init(connections: [], nextPageToken: nil, nextSyncToken: "t", totalItems: 0) }
     func listContactGroups() async throws -> [ContactGroupDTO] { [] }
@@ -27,7 +28,9 @@ final class RecordingPeopleAPIClient: PeopleAPIClientProtocol, @unchecked Sendab
     }
 
     func deleteContact(resourceName: String) async throws { deletedResourceNames.append(resourceName) }
-    func modifyGroupMembers(groupResourceName: String, add: [String], remove: [String]) async throws {}
+    func modifyGroupMembers(groupResourceName: String, add: [String], remove: [String]) async throws {
+        modifyGroupMembersCalls.append((groupResourceName, add, remove))
+    }
     func createContactGroup(name: String) async throws -> ContactGroupDTO { ContactGroupDTO(resourceName: "contactGroups/fake", etag: "e", name: name, formattedName: name, groupType: "USER_CONTACT_GROUP", memberCount: 0) }
     func updateContactGroup(resourceName: String, etag: String, name: String) async throws -> ContactGroupDTO { ContactGroupDTO(resourceName: resourceName, etag: etag, name: name, formattedName: name, groupType: "USER_CONTACT_GROUP", memberCount: 0) }
     func deleteContactGroup(resourceName: String) async throws {}
@@ -61,6 +64,9 @@ struct OutboxDrainingTests {
         #expect(contacts.first?.resourceName == "people/server-assigned-1")
         #expect(contacts.first?.isPendingCreate == false)
         #expect(try context.fetch(FetchDescriptor<PendingMutation>()).isEmpty)
+        #expect(api.modifyGroupMembersCalls.count == 1)
+        #expect(api.modifyGroupMembersCalls.first?.group == "contactGroups/myContacts")
+        #expect(api.modifyGroupMembersCalls.first?.add == ["people/server-assigned-1"])
     }
 
     @Test func drainingUpdateMutationClearsOnSuccess() async throws {
