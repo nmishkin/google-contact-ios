@@ -9,6 +9,7 @@ struct RootSplitView: View {
     var body: some View {
         VStack(spacing: 0) {
             OfflineBannerView(monitor: networkMonitor)
+            SyncStatusBannerView()
             NavigationSplitView {
                 SidebarView(selection: $environment.selectedFilter)
             } content: {
