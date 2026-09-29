@@ -13,18 +13,70 @@ public final class ContactsRepository {
     // persist when saved through the context that object belongs to.
     private var context: ModelContext { modelContainer.mainContext }
 
+    public struct AddressDraft {
+        public var label: String
+        public var street: String
+        public var city: String
+        public var region: String
+        public var postalCode: String
+        public var country: String
+
+        public init(label: String = "home", street: String = "", city: String = "", region: String = "", postalCode: String = "", country: String = "") {
+            self.label = label
+            self.street = street
+            self.city = city
+            self.region = region
+            self.postalCode = postalCode
+            self.country = country
+        }
+    }
+
+    public struct OrganizationDraft {
+        public var name: String
+        public var title: String
+        public var department: String
+        public var isCurrent: Bool
+
+        public init(name: String = "", title: String = "", department: String = "", isCurrent: Bool = false) {
+            self.name = name
+            self.title = title
+            self.department = department
+            self.isCurrent = isCurrent
+        }
+    }
+
     public struct ContactDraft {
         public var givenName: String = ""
         public var familyName: String = ""
+        public var middleName: String = ""
+        public var phoneticGivenName: String = ""
+        public var phoneticFamilyName: String = ""
+        public var nickname: String = ""
         public var emails: [(label: String, value: String)] = []
         public var phones: [(label: String, value: String)] = []
+        public var addresses: [AddressDraft] = []
+        public var organizations: [OrganizationDraft] = []
+        public var urls: [(label: String, value: String)] = []
+        public var relations: [(label: String, value: String)] = []
+        public var userDefinedFields: [(label: String, value: String)] = []
+        public var birthday: DateComponents?
         public var notes: String = ""
 
-        public init(givenName: String = "", familyName: String = "", emails: [(label: String, value: String)] = [], phones: [(label: String, value: String)] = [], notes: String = "") {
+        public init(givenName: String = "", familyName: String = "", middleName: String = "", phoneticGivenName: String = "", phoneticFamilyName: String = "", nickname: String = "", emails: [(label: String, value: String)] = [], phones: [(label: String, value: String)] = [], addresses: [AddressDraft] = [], organizations: [OrganizationDraft] = [], urls: [(label: String, value: String)] = [], relations: [(label: String, value: String)] = [], userDefinedFields: [(label: String, value: String)] = [], birthday: DateComponents? = nil, notes: String = "") {
             self.givenName = givenName
             self.familyName = familyName
+            self.middleName = middleName
+            self.phoneticGivenName = phoneticGivenName
+            self.phoneticFamilyName = phoneticFamilyName
+            self.nickname = nickname
             self.emails = emails
             self.phones = phones
+            self.addresses = addresses
+            self.organizations = organizations
+            self.urls = urls
+            self.relations = relations
+            self.userDefinedFields = userDefinedFields
+            self.birthday = birthday
             self.notes = notes
         }
     }
@@ -39,9 +91,19 @@ public final class ContactsRepository {
         let contact = Contact(resourceName: "local/\(UUID().uuidString)", etag: "", updateTime: .now)
         contact.givenName = draft.givenName
         contact.familyName = draft.familyName
+        contact.middleName = draft.middleName
+        contact.phoneticGivenName = draft.phoneticGivenName
+        contact.phoneticFamilyName = draft.phoneticFamilyName
+        contact.nickname = draft.nickname
         contact.notes = draft.notes
+        contact.birthday = draft.birthday
         contact.emails = draft.emails.map { LabeledValue(label: $0.label, value: $0.value, isPrimary: false) }
         contact.phones = draft.phones.map { LabeledValue(label: $0.label, value: $0.value, isPrimary: false) }
+        contact.urls = draft.urls.map { LabeledValue(label: $0.label, value: $0.value, isPrimary: false) }
+        contact.relations = draft.relations.map { LabeledValue(label: $0.label, value: $0.value, isPrimary: false) }
+        contact.userDefinedFields = draft.userDefinedFields.map { LabeledValue(label: $0.label, value: $0.value, isPrimary: false) }
+        contact.addresses = draft.addresses.map { PostalAddress(label: $0.label, street: $0.street, city: $0.city, region: $0.region, postalCode: $0.postalCode, country: $0.country) }
+        contact.organizations = draft.organizations.map { Organization(name: $0.name, title: $0.title, department: $0.department, isCurrent: $0.isCurrent) }
         contact.isPendingCreate = true
         context.insert(contact)
 
