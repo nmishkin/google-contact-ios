@@ -83,6 +83,23 @@ struct PeopleAPIClientTests {
         }
     }
 
+    @Test func createContactOmitsResourceNameFromRequestBody() async throws {
+        var capturedBody: Data?
+        StubURLProtocol.handler = { request in
+            capturedBody = request.bodyDataForTesting()
+            let responseJSON = #"{"resourceName":"people/c123","etag":"e1"}"#.data(using: .utf8)!
+            return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, responseJSON)
+        }
+
+        // Locally created contacts carry a placeholder resourceName until the server assigns a
+        // real one; the People API rejects create requests whose body includes a resourceName at all.
+        let person = PersonDTO(resourceName: "local/some-uuid", etag: "", names: [NameDTO(givenName: "Ada")])
+        _ = try await makeClient().createContact(person)
+
+        let json = try JSONSerialization.jsonObject(with: capturedBody ?? Data()) as? [String: Any]
+        #expect(json?["resourceName"] == nil)
+    }
+
     @Test func updateContactSendsEtagInBodyAndPatchMethod() async throws {
         var capturedRequest: URLRequest?
         var capturedBody: Data?

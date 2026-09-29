@@ -100,7 +100,11 @@ public final class PeopleAPIClient: PeopleAPIClientProtocol {
 
     public func createContact(_ person: PersonDTO) async throws -> PersonDTO {
         let url = baseURL.appendingPathComponent("people:createContact")
-        let body = try JSONEncoder().encode(person)
+        // The People API rejects create requests whose body includes a resourceName at all
+        // (our local contacts carry a placeholder "local/<uuid>" one), so strip it before sending.
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(person)) as? [String: Any] ?? [:]
+        json.removeValue(forKey: "resourceName")
+        let body = try JSONSerialization.data(withJSONObject: json)
         let request = try await authorizedRequest(url, method: "POST", body: body)
         let (data, http) = try await send(request)
         guard http.statusCode == 200 else { try throwMappedError(status: http.statusCode, data: data, headers: http.allHeaderFields) }

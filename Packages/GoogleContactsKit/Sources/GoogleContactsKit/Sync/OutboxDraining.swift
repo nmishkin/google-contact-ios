@@ -33,6 +33,7 @@ extension SyncEngine {
             } catch {
                 mutation.retryCount += 1
                 mutation.lastError = String(describing: error)
+                print("⚠️ mutation \(mutation.kind) for \(mutation.targetResourceName ?? "?") failed (attempt \(mutation.retryCount)): \(error)")
             }
         }
         try context.save()
