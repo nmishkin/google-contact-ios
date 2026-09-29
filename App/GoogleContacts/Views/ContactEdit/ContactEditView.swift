@@ -76,9 +76,9 @@ struct ContactEditView: View {
                     TextEditor(text: $notes).frame(minHeight: 80)
                 }
 
-                if !showMoreFields {
-                    Button("Show more fields") { showMoreFields = true }
-                } else {
+                Button(showMoreFields ? "Show fewer fields" : "Show more fields") { showMoreFields.toggle() }
+
+                if showMoreFields {
                     Section("Nickname & Alternate Names") {
                         TextField("Nickname", text: $nickname)
                         TextField("Middle name", text: $middleName)
@@ -142,6 +142,7 @@ struct ContactEditView: View {
                     }
                 }
             }
+            .formStyle(.grouped)
             .navigationTitle(existingContact == nil ? "New Contact" : "Edit Contact")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -149,6 +150,9 @@ struct ContactEditView: View {
             }
             .onAppear(perform: populateFromExistingContact)
         }
+        #if os(macOS)
+        .frame(minWidth: 480, idealWidth: 520, minHeight: 480, idealHeight: 640, maxHeight: 760)
+        #endif
     }
 
     private var birthdayComponents: DateComponents? {
