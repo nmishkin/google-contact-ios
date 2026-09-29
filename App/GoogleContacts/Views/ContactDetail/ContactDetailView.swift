@@ -61,6 +61,7 @@ struct ContactDetailView: View {
                 Section("Notes") { Text(contact.notes) }
             }
         }
+        .formStyle(.grouped)
         .navigationTitle("\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces))
         .toolbar {
             Button("Edit") { isEditing = true }
