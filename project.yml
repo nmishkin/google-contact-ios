@@ -21,6 +21,12 @@ targets:
     scheme:
       testTargets:
         - GoogleContactsUITests
+    settings:
+      base:
+        # Only real-device (iphoneos SDK) builds need a team/profile; leave the macOS build's
+        # existing ad-hoc "Sign to Run Locally" signing (used by build-and-install.sh) untouched.
+        "DEVELOPMENT_TEAM[sdk=iphoneos*]": U8A99RW79V
+        "CODE_SIGN_STYLE[sdk=iphoneos*]": Automatic
     info:
       path: App/GoogleContacts/Info.plist
       properties:
