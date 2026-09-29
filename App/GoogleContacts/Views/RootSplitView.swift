@@ -16,7 +16,7 @@ struct RootSplitView: View {
                 ContactListView(filter: environment.selectedFilter, selectedContact: $selectedContact)
             } detail: {
                 if let selectedContact {
-                    ContactDetailView(contact: selectedContact)
+                    ContactDetailView(contact: selectedContact, selectedContact: $selectedContact)
                 } else {
                     ContentUnavailableView("Select a contact", systemImage: "person.crop.circle")
                 }

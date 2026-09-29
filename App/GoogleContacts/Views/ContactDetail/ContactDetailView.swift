@@ -3,9 +3,16 @@ import GoogleContactsKit
 
 struct ContactDetailView: View {
     let contact: Contact
+    @Binding var selectedContact: Contact?
     @EnvironmentObject private var environment: AppEnvironment
     @State private var isEditing = false
     @State private var hasConflict = false
+    @State private var isConfirmingDelete = false
+
+    private var displayName: String {
+        let name = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? "this contact" : name
+    }
 
     var body: some View {
         Form {
@@ -65,14 +72,25 @@ struct ContactDetailView: View {
         .navigationTitle("\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces))
         .toolbar {
             Button("Edit") { isEditing = true }
+            Button("Delete", role: .destructive) { isConfirmingDelete = true }
         }
         .sheet(isPresented: $isEditing) {
             ContactEditView(contact: contact)
+        }
+        .confirmationDialog("Delete \(displayName)?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { deleteContact() }
+        } message: {
+            Text("This removes \(displayName) from your Google Contacts. This can't be undone.")
         }
         .task(id: contact.resourceName) {
             let conflicts = await environment.syncEngine.pendingConflicts()
             hasConflict = conflicts.contains { $0.resourceName == contact.resourceName }
         }
+    }
+
+    private func deleteContact() {
+        try? environment.repository.delete(contact)
+        selectedContact = nil
     }
 
     private func formatted(_ components: DateComponents) -> String {
