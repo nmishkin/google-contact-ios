@@ -87,15 +87,27 @@ public final class PeopleAPIClient: PeopleAPIClientProtocol {
     }
 
     public func listContactGroups() async throws -> [ContactGroupDTO] {
-        let url = baseURL.appendingPathComponent("contactGroups")
-        let request = try await authorizedRequest(url, method: "GET")
-        let (data, http) = try await send(request)
-        guard http.statusCode == 200 else { try throwMappedError(status: http.statusCode, data: data, headers: http.allHeaderFields) }
-        do {
-            return try JSONDecoder().decode(ListContactGroupsResponseDTO.self, from: data).contactGroups
-        } catch {
-            throw PeopleAPIError.decoding(String(describing: error))
-        }
+        var groups: [ContactGroupDTO] = []
+        var pageToken: String? = nil
+        repeat {
+            var components = URLComponents(url: baseURL.appendingPathComponent("contactGroups"), resolvingAgainstBaseURL: false)!
+            var items = [URLQueryItem(name: "pageSize", value: "1000")]
+            if let pageToken { items.append(URLQueryItem(name: "pageToken", value: pageToken)) }
+            components.queryItems = items
+
+            let request = try await authorizedRequest(components.url!, method: "GET")
+            let (data, http) = try await send(request)
+            guard http.statusCode == 200 else { try throwMappedError(status: http.statusCode, data: data, headers: http.allHeaderFields) }
+            let page: ListContactGroupsResponseDTO
+            do {
+                page = try JSONDecoder().decode(ListContactGroupsResponseDTO.self, from: data)
+            } catch {
+                throw PeopleAPIError.decoding(String(describing: error))
+            }
+            groups.append(contentsOf: page.contactGroups)
+            pageToken = page.nextPageToken?.isEmpty == false ? page.nextPageToken : nil
+        } while pageToken != nil
+        return groups
     }
 
     public func createContact(_ person: PersonDTO) async throws -> PersonDTO {

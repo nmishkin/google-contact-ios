@@ -143,6 +143,26 @@ struct PeopleAPIClientTests {
         // no throw = success
     }
 
+    @Test func listContactGroupsFollowsPaginationAcrossMultiplePages() async throws {
+        var capturedPageTokens: [String?] = []
+        StubURLProtocol.handler = { request in
+            let pageToken = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "pageToken" }?.value
+            capturedPageTokens.append(pageToken)
+            let responseJSON: String
+            if pageToken == nil {
+                responseJSON = #"{"contactGroups":[{"resourceName":"contactGroups/g1","etag":"e1","name":"Group1","groupType":"USER_CONTACT_GROUP"}],"nextPageToken":"page2"}"#
+            } else {
+                responseJSON = #"{"contactGroups":[{"resourceName":"contactGroups/g2","etag":"e2","name":"Group2","groupType":"USER_CONTACT_GROUP"}]}"#
+            }
+            return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, responseJSON.data(using: .utf8)!)
+        }
+
+        let groups = try await makeClient().listContactGroups()
+
+        #expect(capturedPageTokens == [nil, "page2"])
+        #expect(groups.map(\.resourceName) == ["contactGroups/g1", "contactGroups/g2"])
+    }
+
     @Test func rateLimitedResponseParsesRetryAfterHeader() async throws {
         StubURLProtocol.handler = { request in
             (HTTPURLResponse(url: request.url!, statusCode: 429, httpVersion: nil, headerFields: ["Retry-After": "30"])!, Data())
