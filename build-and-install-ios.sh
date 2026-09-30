@@ -20,7 +20,7 @@ with open('$DEVICES_JSON') as f:
     data = json.load(f)
 for d in data['result']['devices']:
     hw = d.get('hardwareProperties', {})
-    if hw.get('platform') == 'iOS' and hw.get('reality') == 'physical':
+    if hw.get('platform') == 'iOS' and hw.get('reality') != 'simulated':
         print(d['identifier'])
         break
 ")
