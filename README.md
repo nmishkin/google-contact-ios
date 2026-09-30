@@ -26,5 +26,9 @@ The Xcode project is `GoogleContacts.xcodeproj`, generated from `project.yml`; a
 3. **Archive and upload**: open `GoogleContacts.xcodeproj` in Xcode, scheme **GoogleContacts_iOS**, destination **Any iOS Device (arm64)** (archiving needs this, not a simulator or a specific plugged-in device). **Product → Archive**. When the Organizer opens, **Distribute App → TestFlight & App Store Connect → Upload**. Automatic signing handles the distribution certificate/profile. Apple then processes the build server-side (usually 5-30 minutes) before it appears under the app's **TestFlight** tab.
 4. **Export compliance**: the first build for the app prompts for an encryption-usage answer — this app only uses standard HTTPS, so answer "No" to using proprietary encryption.
 5. **Test information**: a short description of what to test is required before any tester (including yourself) can install a build.
-6. **Add yourself as an internal tester** under the app's **TestFlight → Internal Testing** tab. Internal testing has no App Review step — the build is installable as soon as it finishes processing. (External testers would need a quick Beta App Review first.)
-7. **Install**: get the **TestFlight** app from the App Store on the iPhone, sign in with the same Apple ID, and install the build from there.
+6. **Add yourself as a tester** under the app's **TestFlight** tab: create a group (e.g. "Internal Testers") under **Internal Testing**, add your Apple ID to it, and add the build to that group. Internal testing has no App Review step — the build is installable as soon as it finishes processing. (External testers would need a quick Beta App Review first.)
+7. **On your iPhone**:
+   - Install the **TestFlight** app from the App Store, if it isn't already there.
+   - Open TestFlight and sign in with the same Apple ID used in step 6.
+   - The app should show up directly in TestFlight's list. If it doesn't appear after a minute or two, check email (including spam) for a "You've been invited to test..." link from Apple and tap it — accepting the invite link is sometimes needed even for internal testers, and it opens straight into TestFlight.
+   - Tap the app, then **Accept** if prompted, then **Install**.
