@@ -30,7 +30,6 @@ targets:
     info:
       path: App/GoogleContacts/Info.plist
       properties:
-        CFBundleVersion: "2"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -44,6 +43,14 @@ targets:
     entitlements:
       path: App/GoogleContacts/GoogleContacts.entitlements
       properties: {}
+    postBuildScripts:
+      - name: Set CFBundleVersion from git commit count
+        basedOnDependencyAnalysis: false
+        script: |
+          set -eu
+          build_number=$(git -C "$SRCROOT" rev-list --count HEAD)
+          plist="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" "$plist"
     dependencies:
       - package: GoogleContactsKit
       - package: GoogleSignIn
