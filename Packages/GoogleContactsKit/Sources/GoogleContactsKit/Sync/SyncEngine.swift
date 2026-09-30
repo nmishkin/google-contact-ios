@@ -28,31 +28,7 @@ public actor SyncEngine {
 
     public func fullSync() async throws {
         let context = ModelContext(modelContainer)
-
-        // Groups are fetched best-effort: a groups-specific failure (e.g. insufficient scope for
-        // that endpoint) shouldn't block syncing contacts, which is the primary thing users need.
-        var groupDTOs: [ContactGroupDTO] = []
-        do {
-            groupDTOs = try await apiClient.listContactGroups()
-        } catch {
-            print("⚠️ listContactGroups failed, continuing without groups: \(error)")
-        }
-        var groupsByResourceName: [String: ContactGroup] = [:]
-        let existingGroups = try context.fetch(FetchDescriptor<ContactGroup>())
-        var existingGroupsByResourceName = Dictionary(uniqueKeysWithValues: existingGroups.map { ($0.resourceName, $0) })
-        for dto in groupDTOs {
-            if let group = existingGroupsByResourceName[dto.resourceName] {
-                group.name = dto.name
-                group.groupType = dto.groupType
-                group.etag = dto.etag ?? ""
-                groupsByResourceName[dto.resourceName] = group
-            } else {
-                let group = ContactGroup(resourceName: dto.resourceName, name: dto.name, groupType: dto.groupType, etag: dto.etag ?? "")
-                context.insert(group)
-                groupsByResourceName[dto.resourceName] = group
-                existingGroupsByResourceName[dto.resourceName] = group
-            }
-        }
+        let groupsByResourceName = await syncGroups(context: context)
 
         var seenResourceNames = Set<String>()
         var pageToken: String? = nil
@@ -80,8 +56,7 @@ public actor SyncEngine {
             return
         }
         let context = ModelContext(modelContainer)
-        let existingGroups = try context.fetch(FetchDescriptor<ContactGroup>())
-        let groupsByResourceName = Dictionary(uniqueKeysWithValues: existingGroups.map { ($0.resourceName, $0) })
+        let groupsByResourceName = await syncGroups(context: context)
 
         var pageToken: String? = nil
         var finalSyncToken: String? = nil
@@ -107,6 +82,40 @@ public actor SyncEngine {
 
         try context.save()
         if let finalSyncToken { syncTokenStore.save(finalSyncToken) }
+    }
+
+    // Refreshes groups from the server and returns the current local groups (both new and
+    // previously-known) keyed by resourceName. Called on every sync, not just fullSync, so that
+    // labels created or renamed after the initial sync are still picked up by incrementalSync,
+    // which otherwise never touches the groups endpoint at all.
+    //
+    // Best-effort: a groups-specific failure (e.g. insufficient scope for that endpoint) shouldn't
+    // block syncing contacts, which is the primary thing users need; on failure this falls back to
+    // whatever groups are already cached locally rather than losing membership data.
+    private func syncGroups(context: ModelContext) async -> [String: ContactGroup] {
+        let existingGroups = (try? context.fetch(FetchDescriptor<ContactGroup>())) ?? []
+        var groupsByResourceName = Dictionary(uniqueKeysWithValues: existingGroups.map { ($0.resourceName, $0) })
+
+        let groupDTOs: [ContactGroupDTO]
+        do {
+            groupDTOs = try await apiClient.listContactGroups()
+        } catch {
+            print("⚠️ listContactGroups failed, continuing with locally cached groups: \(error)")
+            return groupsByResourceName
+        }
+
+        for dto in groupDTOs {
+            if let group = groupsByResourceName[dto.resourceName] {
+                group.name = dto.displayName
+                group.groupType = dto.groupType
+                group.etag = dto.etag ?? ""
+            } else {
+                let group = ContactGroup(resourceName: dto.resourceName, name: dto.displayName, groupType: dto.groupType, etag: dto.etag ?? "")
+                context.insert(group)
+                groupsByResourceName[dto.resourceName] = group
+            }
+        }
+        return groupsByResourceName
     }
 
     private func upsert(connections: [ConnectionDTO], groupsByResourceName: [String: ContactGroup], context: ModelContext) throws {

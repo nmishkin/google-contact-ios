@@ -126,6 +126,29 @@ struct SyncEngineTests {
         #expect(try context.fetch(FetchDescriptor<Contact>()).count == 1)
     }
 
+    @Test func incrementalSyncPicksUpGroupsCreatedAfterTheInitialSync() async throws {
+        let container = try makeContainer()
+        let api = FakePeopleAPIClient()
+        // No groups yet at the time of the (implicit) first sync.
+        let tokenStore = InMemorySyncTokenStore()
+        tokenStore.token = "prior-token"
+
+        // A label was created server-side after the app's last sync, and a contact was added to it.
+        api.groups = [ContactGroupDTO(resourceName: "contactGroups/newLabel", etag: "g1", name: "New Label", formattedName: "New Label", groupType: "USER_CONTACT_GROUP", memberCount: 1)]
+        api.connectionsPages = [[
+            ConnectionDTO(resourceName: "people/c1", etag: "e1", names: [NameDTO(givenName: "Ada")], memberships: [MembershipDTO(contactGroupMembership: .init(contactGroupResourceName: "contactGroups/newLabel"))])
+        ]]
+        let engine = SyncEngine(modelContainer: container, apiClient: api, syncTokenStore: tokenStore)
+
+        try await engine.incrementalSync()
+
+        let context = ModelContext(container)
+        let groups = try context.fetch(FetchDescriptor<ContactGroup>())
+        #expect(groups.map(\.resourceName) == ["contactGroups/newLabel"])
+        let contact = try context.fetch(FetchDescriptor<Contact>(predicate: #Predicate { $0.resourceName == "people/c1" })).first
+        #expect(contact?.memberships.map(\.resourceName) == ["contactGroups/newLabel"])
+    }
+
     @Test func fullSyncStillSyncsContactsWhenListContactGroupsFails() async throws {
         let container = try makeContainer()
         let api = FakePeopleAPIClient()
