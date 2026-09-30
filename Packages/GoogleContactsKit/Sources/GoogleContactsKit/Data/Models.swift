@@ -122,6 +122,13 @@ public final class ContactGroup {
         self.groupType = groupType
         self.etag = etag
     }
+
+    /// Google's own web UI treats these system groups as regular assignable labels alongside
+    /// user-created ones (groupType == USER_CONTACT_GROUP), unlike its other system groups
+    /// (myContacts, starred, chatBuddies, all, blocked), which aren't user-facing labels.
+    public static let labelLikeSystemGroupResourceNames: Set<String> = [
+        "contactGroups/family", "contactGroups/friends", "contactGroups/coworkers",
+    ]
 }
 
 public enum MutationKind: Codable, Equatable {

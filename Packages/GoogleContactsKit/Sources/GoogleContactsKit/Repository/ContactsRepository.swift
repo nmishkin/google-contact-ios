@@ -161,7 +161,7 @@ public final class ContactsRepository {
 
     public func createLabel(name: String) async throws -> ContactGroup {
         let dto = try await apiClient.createContactGroup(name: name)
-        let group = ContactGroup(resourceName: dto.resourceName, name: dto.name, groupType: dto.groupType, etag: dto.etag ?? "")
+        let group = ContactGroup(resourceName: dto.resourceName, name: dto.displayName, groupType: dto.groupType, etag: dto.etag ?? "")
         context.insert(group)
         try context.save()
         return group
@@ -169,7 +169,7 @@ public final class ContactsRepository {
 
     public func renameLabel(_ group: ContactGroup, to newName: String) async throws {
         let dto = try await apiClient.updateContactGroup(resourceName: group.resourceName, etag: group.etag, name: newName)
-        group.name = dto.name
+        group.name = dto.displayName
         group.etag = dto.etag ?? ""
         try context.save()
     }

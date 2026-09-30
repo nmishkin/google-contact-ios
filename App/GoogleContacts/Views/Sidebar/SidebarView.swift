@@ -2,8 +2,15 @@ import SwiftUI
 import SwiftData
 import GoogleContactsKit
 
+// #Predicate can't resolve a static-member keypath (ContactGroup.labelLikeSystemGroupResourceNames)
+// inside the macro; capturing it as a plain top-level constant works.
+private let labelLikeSystemGroups = ContactGroup.labelLikeSystemGroupResourceNames
+
 struct SidebarView: View {
-    @Query(filter: #Predicate<ContactGroup> { $0.groupType == "USER_CONTACT_GROUP" }, sort: \ContactGroup.name)
+    // "starred" already has its own dedicated sidebar entry above.
+    @Query(filter: #Predicate<ContactGroup> {
+        $0.groupType == "USER_CONTACT_GROUP" || labelLikeSystemGroups.contains($0.resourceName)
+    }, sort: \ContactGroup.name)
     private var labels: [ContactGroup]
     @Binding var selection: SidebarFilter
     @Environment(\.signOut) private var signOut

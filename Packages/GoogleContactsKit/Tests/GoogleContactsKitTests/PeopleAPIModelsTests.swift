@@ -37,6 +37,17 @@ struct PeopleAPIModelsTests {
         #expect(list.contactGroups.first { $0.resourceName == "contactGroups/abcd1234" }?.groupType == "USER_CONTACT_GROUP")
     }
 
+    @Test func contactGroupDTODisplayNamePrefersFormattedNameOverRawName() {
+        // Google returns a lowercase, stable API identifier in `name` for system groups (e.g.
+        // "family") and a properly capitalized, locale-formatted label in `formattedName`.
+        let systemGroup = ContactGroupDTO(resourceName: "contactGroups/family", name: "family", formattedName: "Family", groupType: "SYSTEM_CONTACT_GROUP")
+        #expect(systemGroup.displayName == "Family")
+
+        // User-created labels don't get formattedName, so name is already display-ready.
+        let userGroup = ContactGroupDTO(resourceName: "contactGroups/g1", name: "Book Club", groupType: "USER_CONTACT_GROUP")
+        #expect(userGroup.displayName == "Book Club")
+    }
+
     @Test func decodesContactGroupMissingEtag() throws {
         // Real Google People API responses omit `etag` for some system groups (observed for
         // "Other Contacts" in production); decoding must not fail because of it.

@@ -49,6 +49,15 @@ struct ModelRoundTripTests {
         #expect(fetchedGroup?.members.first?.resourceName == "people/c2")
     }
 
+    @Test func labelLikeSystemGroupResourceNamesCoversGooglesDefaultAssignableLabels() {
+        // Google's own web UI treats these three system groups as regular assignable labels
+        // (unlike myContacts/starred/chatBuddies/all/blocked, which aren't user-facing labels).
+        // The app's label UI (SidebarView, ContactEditView) filters on this set.
+        #expect(ContactGroup.labelLikeSystemGroupResourceNames == [
+            "contactGroups/family", "contactGroups/friends", "contactGroups/coworkers",
+        ])
+    }
+
     @Test func pendingMutationPayloadRoundTrips() throws {
         let container = try makeInMemoryContainer()
         let context = ModelContext(container)

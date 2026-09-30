@@ -7,6 +7,12 @@ struct ContactEditView: View {
     let existingContact: Contact?
     @EnvironmentObject private var environment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
+    // Deliberately USER_CONTACT_GROUP only, unlike SidebarView: Google's API rejects membership
+    // changes to family/friends/coworkers ("Cannot add contacts to deprecated system contact
+    // group...") through every public write endpoint tried (contactGroups.members.modify and
+    // people.updateContact's memberships field both hit the identical rejection), even though
+    // it still returns and displays them fine, and contacts.google.com's own web UI can still
+    // assign them (almost certainly via a private, non-public API).
     @Query(filter: #Predicate<ContactGroup> { $0.groupType == "USER_CONTACT_GROUP" }, sort: \ContactGroup.name)
     private var allLabels: [ContactGroup]
 

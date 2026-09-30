@@ -273,6 +273,11 @@ public struct ContactGroupDTO: Codable, Equatable, Sendable {
         self.groupType = groupType
         self.memberCount = memberCount
     }
+
+    /// `name` is a stable, lowercase API identifier for system groups (e.g. "family"); Google
+    /// only returns a properly capitalized, locale-formatted label in `formattedName` for those.
+    /// User-created labels don't get this treatment, so `name` is already display-ready there.
+    public var displayName: String { formattedName ?? name }
 }
 
 public struct ListContactGroupsResponseDTO: Codable, Equatable, Sendable {
