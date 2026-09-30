@@ -14,6 +14,15 @@ struct ContactDetailView: View {
         return name.isEmpty ? "this contact" : name
     }
 
+    // Excludes pure-infrastructure system groups (myContacts, all, chatBuddies, blocked) that
+    // aren't user-facing labels; "starred" is already shown via the star indicator elsewhere.
+    // Matches the set SidebarView and ContactEditView treat as assignable labels.
+    private var labels: [ContactGroup] {
+        contact.memberships
+            .filter { $0.groupType == "USER_CONTACT_GROUP" || ContactGroup.labelLikeSystemGroupResourceNames.contains($0.resourceName) }
+            .sorted { $0.name < $1.name }
+    }
+
     var body: some View {
         Form {
             if hasConflict {
@@ -63,6 +72,13 @@ struct ContactDetailView: View {
             }
             if !contact.userDefinedFields.isEmpty {
                 Section("Custom Fields") { ForEach(contact.userDefinedFields) { LabeledContent($0.label, value: $0.value) } }
+            }
+            if !labels.isEmpty {
+                Section("Labels") {
+                    ForEach(labels) { group in
+                        Label(group.name, systemImage: "tag")
+                    }
+                }
             }
             if !contact.notes.isEmpty {
                 Section("Notes") { Text(contact.notes) }
