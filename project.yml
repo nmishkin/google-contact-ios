@@ -30,6 +30,7 @@ targets:
     info:
       path: App/GoogleContacts/Info.plist
       properties:
+        CFBundleVersion: "2"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
