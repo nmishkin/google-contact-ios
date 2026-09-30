@@ -43,6 +43,20 @@ extension SyncEngine {
         await conflictRegistry.all()
     }
 
+    /// Discards mutations that have failed at least once (e.g. a permanently-rejected request
+    /// like modifying membership in a deprecated system group), since drainOutbox retries
+    /// indefinitely with no way to distinguish a permanent rejection from a transient failure.
+    /// Any local state the discarded mutation was pushing (e.g. an optimistic membership change)
+    /// gets reconciled against the server's truth on the next sync.
+    public func discardFailedMutations() async throws {
+        let context = ModelContext(modelContainer)
+        let mutations = try context.fetch(FetchDescriptor<PendingMutation>())
+        for mutation in mutations where mutation.lastError != nil {
+            context.delete(mutation)
+        }
+        try context.save()
+    }
+
     public func resolveConflict(resourceName: String, keepLocal: Bool) async throws {
         let context = ModelContext(modelContainer)
         guard let contact = try context.fetch(FetchDescriptor<Contact>(predicate: #Predicate { $0.resourceName == resourceName })).first else { return }

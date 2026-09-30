@@ -10,6 +10,7 @@ final class RecordingPeopleAPIClient: PeopleAPIClientProtocol, @unchecked Sendab
     var nextCreateResourceName = "people/server-assigned-1"
     var updateShouldThrowConflictWithServerName: String?
     var modifyGroupMembersCalls: [(group: String, add: [String], remove: [String])] = []
+    var modifyGroupMembersShouldThrow: (any Error)?
 
     func listConnections(pageToken: String?, syncToken: String?) async throws -> ListConnectionsResponseDTO { .init(connections: [], nextPageToken: nil, nextSyncToken: "t", totalItems: 0) }
     func listContactGroups() async throws -> [ContactGroupDTO] { [] }
@@ -29,6 +30,7 @@ final class RecordingPeopleAPIClient: PeopleAPIClientProtocol, @unchecked Sendab
 
     func deleteContact(resourceName: String) async throws { deletedResourceNames.append(resourceName) }
     func modifyGroupMembers(groupResourceName: String, add: [String], remove: [String]) async throws {
+        if let error = modifyGroupMembersShouldThrow { throw error }
         modifyGroupMembersCalls.append((groupResourceName, add, remove))
     }
     func createContactGroup(name: String) async throws -> ContactGroupDTO { ContactGroupDTO(resourceName: "contactGroups/fake", etag: "e", name: name, formattedName: name, groupType: "USER_CONTACT_GROUP", memberCount: 0) }
@@ -108,6 +110,35 @@ struct OutboxDrainingTests {
         let conflicts = await engine.pendingConflicts()
         #expect(conflicts.first?.resourceName == "people/c1")
         #expect(conflicts.first?.serverCopy.etag == "server-etag")
+    }
+
+    @Test func discardFailedMutationsRemovesOnlyMutationsThatHaveFailedAtLeastOnce() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let payload = try JSONEncoder().encode(GroupMembershipChangePayload(groupResourceName: "contactGroups/family", add: true))
+        let failing = PendingMutation(kind: .groupMembershipChange, targetResourceName: "people/c1", payload: payload)
+        context.insert(failing)
+        let notYetAttempted = PendingMutation(kind: .groupMembershipChange, targetResourceName: "people/c2", payload: payload)
+        context.insert(notYetAttempted)
+        try context.save()
+
+        let api = RecordingPeopleAPIClient()
+        api.modifyGroupMembersShouldThrow = PeopleAPIError.http(status: 400, message: "Cannot add contacts to deprecated system contact group")
+        let engine = SyncEngine(modelContainer: container, apiClient: api, syncTokenStore: InMemorySyncTokenStore())
+
+        // Drain once so `failing` actually records a failure (lastError set); `notYetAttempted`
+        // also fails here since the fake throws unconditionally, so insert it fresh afterward to
+        // simulate a mutation that simply hasn't been attempted yet.
+        try await engine.drainOutbox()
+        context.delete(notYetAttempted)
+        let untouched = PendingMutation(kind: .groupMembershipChange, targetResourceName: "people/c2", payload: payload)
+        context.insert(untouched)
+        try context.save()
+
+        try await engine.discardFailedMutations()
+
+        let remaining = try context.fetch(FetchDescriptor<PendingMutation>())
+        #expect(remaining.map(\.targetResourceName) == ["people/c2"])
     }
 
     @Test func resolveConflictKeepLocalRepushesWithFreshEtag() async throws {

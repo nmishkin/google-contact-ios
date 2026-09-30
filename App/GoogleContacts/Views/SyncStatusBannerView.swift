@@ -6,6 +6,7 @@ struct SyncStatusBannerView: View {
     @EnvironmentObject private var environment: AppEnvironment
     @Query(sort: \PendingMutation.createdAt) private var mutations: [PendingMutation]
     @State private var isRetrying = false
+    @State private var isDiscarding = false
 
     private var failed: [PendingMutation] { mutations.filter { $0.lastError != nil } }
 
@@ -14,8 +15,10 @@ struct SyncStatusBannerView: View {
             HStack {
                 Text(failed.count == 1 ? "1 change couldn't sync" : "\(failed.count) changes couldn't sync")
                 Spacer()
+                Button("Discard", role: .destructive) { discard() }
+                    .disabled(isRetrying || isDiscarding)
                 Button(isRetrying ? "Retrying…" : "Retry") { retry() }
-                    .disabled(isRetrying)
+                    .disabled(isRetrying || isDiscarding)
             }
             .font(.footnote)
             .padding(6)
@@ -35,6 +38,14 @@ struct SyncStatusBannerView: View {
         Task {
             try? await environment.syncEngine.drainOutbox()
             isRetrying = false
+        }
+    }
+
+    private func discard() {
+        isDiscarding = true
+        Task {
+            try? await environment.syncEngine.discardFailedMutations()
+            isDiscarding = false
         }
     }
 }
