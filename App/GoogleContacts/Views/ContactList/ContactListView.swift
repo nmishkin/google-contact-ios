@@ -22,47 +22,18 @@ struct ContactListView: View {
         case .group(let group): byFilter = base.filter { $0.memberships.contains { $0.resourceName == group.resourceName } }
         }
         guard !searchText.isEmpty else { return byFilter }
-        return byFilter.filter { matches($0, searchText) }
-    }
-
-    /// Matches against every text field the contact model holds, not just name/email/phone, so a
-    /// term found anywhere in the app (notes, an address, a custom field, ...) is also findable
-    /// here.
-    private func matches(_ contact: Contact, _ searchText: String) -> Bool {
-        func contains(_ value: String) -> Bool { value.localizedCaseInsensitiveContains(searchText) }
-
-        if contains(contact.givenName) || contains(contact.familyName) || contains(contact.middleName)
-            || contains(contact.nickname) || contains(contact.phoneticGivenName) || contains(contact.phoneticFamilyName)
-            || contains(contact.notes) {
-            return true
-        }
-        if contact.emails.contains(where: { contains($0.value) }) { return true }
-        if contact.phones.contains(where: { contains($0.value) }) { return true }
-        if contact.urls.contains(where: { contains($0.value) }) { return true }
-        if contact.organizations.contains(where: { contains($0.name) || contains($0.title) || contains($0.department) }) { return true }
-        if contact.addresses.contains(where: {
-            contains($0.street) || contains($0.city) || contains($0.region) || contains($0.postalCode) || contains($0.country) || contains($0.formattedValue)
-        }) { return true }
-        if contact.relations.contains(where: { contains($0.label) || contains($0.value) }) { return true }
-        if contact.userDefinedFields.contains(where: { contains($0.label) || contains($0.value) }) { return true }
-        return false
+        return byFilter.filter { $0.matchesSearch(searchText) }
     }
 
     var body: some View {
         List(filtered, selection: $selectedContact) { contact in
             NavigationLink(value: contact) {
-                VStack(alignment: .leading, spacing: 2) {
-                    primaryLabelText(for: contact)
-                        .font(.body)
-                    if let subtitle = organizationSubtitle(for: contact) {
-                        Text(subtitle).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
+                ContactRow(contact: contact)
             }
             .swipeActions(edge: .trailing) {
                 Button(role: .destructive) { try? environment.repository.delete(contact) } label: { Label("Delete", systemImage: "trash") }
             }
-            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+            .contactRowInsets()
         }
         #if os(iOS)
         .listRowSpacing(2)
@@ -77,6 +48,56 @@ struct ContactListView: View {
         }
         .sheet(isPresented: $isPresentingNewContact) {
             ContactEditView()
+        }
+    }
+
+    private func title(for filter: SidebarFilter) -> String {
+        switch filter {
+        case .all: "All Contacts"
+        case .starred: "Starred"
+        case .peopleContacts: "People Contacts"
+        case .organizationContacts: "Organization Contacts"
+        case .group(let group): group.name
+        }
+    }
+}
+
+extension Contact {
+    /// Matches against every text field the contact model holds, not just name/email/phone, so a
+    /// term found anywhere in the app (notes, an address, a custom field, ...) is also findable
+    /// here.
+    func matchesSearch(_ searchText: String) -> Bool {
+        func contains(_ value: String) -> Bool { value.localizedCaseInsensitiveContains(searchText) }
+
+        if contains(givenName) || contains(familyName) || contains(middleName)
+            || contains(nickname) || contains(phoneticGivenName) || contains(phoneticFamilyName)
+            || contains(notes) {
+            return true
+        }
+        if emails.contains(where: { contains($0.value) }) { return true }
+        if phones.contains(where: { contains($0.value) }) { return true }
+        if urls.contains(where: { contains($0.value) }) { return true }
+        if organizations.contains(where: { contains($0.name) || contains($0.title) || contains($0.department) }) { return true }
+        if addresses.contains(where: {
+            contains($0.street) || contains($0.city) || contains($0.region) || contains($0.postalCode) || contains($0.country) || contains($0.formattedValue)
+        }) { return true }
+        if relations.contains(where: { contains($0.label) || contains($0.value) }) { return true }
+        if userDefinedFields.contains(where: { contains($0.label) || contains($0.value) }) { return true }
+        return false
+    }
+}
+
+/// One contact's row: name (family name bolded) with the organization as a subtitle.
+struct ContactRow: View {
+    let contact: Contact
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            primaryLabelText(for: contact)
+                .font(.body)
+            if let subtitle = organizationSubtitle(for: contact) {
+                Text(subtitle).font(.caption).foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -104,14 +125,10 @@ struct ContactListView: View {
         guard hasName, let organization = contact.organizations.first, !organization.name.isEmpty else { return nil }
         return organization.name
     }
+}
 
-    private func title(for filter: SidebarFilter) -> String {
-        switch filter {
-        case .all: "All Contacts"
-        case .starred: "Starred"
-        case .peopleContacts: "People Contacts"
-        case .organizationContacts: "Organization Contacts"
-        case .group(let group): group.name
-        }
+extension View {
+    func contactRowInsets() -> some View {
+        listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 }
