@@ -45,7 +45,15 @@ struct ContactDetailView: View {
                 Section("Email") { ForEach(contact.emails) { LabeledContent($0.label.capitalized, value: $0.value) } }
             }
             if !contact.phones.isEmpty {
-                Section("Phone") { ForEach(contact.phones) { LabeledContent($0.label.capitalized, value: $0.value) } }
+                Section("Phone") {
+                    ForEach(contact.phones) { phone in
+                        if let url = telURL(for: phone.value) {
+                            LabeledContent(phone.label.capitalized) { Link(phone.value, destination: url) }
+                        } else {
+                            LabeledContent(phone.label.capitalized, value: phone.value)
+                        }
+                    }
+                }
             }
             if !contact.addresses.isEmpty {
                 Section("Address") {
@@ -130,6 +138,13 @@ struct ContactDetailView: View {
         var components = URLComponents(string: "https://maps.apple.com/")
         components?.queryItems = [URLQueryItem(name: "q", value: trimmed)]
         return components?.url
+    }
+
+    // tel: URLs only accept dialable characters, so drop formatting like spaces, dashes and parens.
+    private func telURL(for phone: String) -> URL? {
+        let dialable = phone.filter { $0.isNumber || "+*#,;".contains($0) }
+        guard dialable.contains(where: \.isNumber) else { return nil }
+        return URL(string: "tel:\(dialable)")
     }
 
     private func formatted(_ components: DateComponents) -> String {
