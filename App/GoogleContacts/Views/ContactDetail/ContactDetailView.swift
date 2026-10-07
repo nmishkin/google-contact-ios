@@ -59,13 +59,22 @@ struct ContactDetailView: View {
                 Section("Address") {
                     ForEach(contact.addresses) { address in
                         let text = displayText(for: address)
-                        if let url = mapsURL(for: text) {
-                            // Links in a Form render like buttons, which center multi-line text.
-                            Link(destination: url) {
+                        if let appleURL = appleMapsURL(for: text), let googleURL = googleMapsURL(for: text) {
+                            Menu {
+                                Link("Open in Apple Maps", destination: appleURL)
+                                Link("Open in Google Maps", destination: googleURL)
+                            } label: {
+                                // Menus in a Form render like buttons, which center multi-line text.
                                 Text(text)
                                     .multilineTextAlignment(.leading)
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.tint)
+                                    .contentShape(Rectangle())
                             }
+                            .menuStyle(.button)
+                            // .borderless ignores the label's foreground style on macOS (renders black).
+                            .buttonStyle(.plain)
+                            .menuIndicator(.hidden)
                         } else {
                             Text(text)
                         }
@@ -132,12 +141,21 @@ struct ContactDetailView: View {
     }
 
     // Apple Maps universal link: opens the Maps app on iOS/macOS and searches for the address.
-    private func mapsURL(for address: String) -> URL? {
+    private func appleMapsURL(for address: String) -> URL? {
+        searchURL("https://maps.apple.com/", queryName: "q", address: address)
+    }
+
+    // Google Maps universal link: opens the Google Maps app on iOS if installed, otherwise the
+    // browser (always the browser on macOS, which has no Google Maps app).
+    private func googleMapsURL(for address: String) -> URL? {
+        searchURL("https://www.google.com/maps/search/?api=1", queryName: "query", address: address)
+    }
+
+    private func searchURL(_ base: String, queryName: String, address: String) -> URL? {
         let trimmed = address.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        var components = URLComponents(string: "https://maps.apple.com/")
-        components?.queryItems = [URLQueryItem(name: "q", value: trimmed)]
-        return components?.url
+        guard !trimmed.isEmpty, var components = URLComponents(string: base) else { return nil }
+        components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: queryName, value: trimmed)]
+        return components.url
     }
 
     // tel: URLs only accept dialable characters, so drop formatting like spaces, dashes and parens.
