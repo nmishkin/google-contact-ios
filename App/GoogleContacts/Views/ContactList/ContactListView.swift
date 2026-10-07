@@ -47,7 +47,7 @@ struct ContactListView: View {
             }
         }
         .sheet(isPresented: $isPresentingNewContact) {
-            ContactEditView()
+            ContactEditView { selectedContact = $0 }
         }
     }
 

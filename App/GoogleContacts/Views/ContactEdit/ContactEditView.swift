@@ -40,11 +40,16 @@ struct ContactEditView: View {
 
     @State private var previousSnapshot: PersonDTO?
 
+    /// Called with the newly created contact after a successful create (not called for edits).
+    private let onCreate: ((Contact) -> Void)?
+
     init(contact: Contact) {
         self.existingContact = contact
+        self.onCreate = nil
     }
-    init() {
+    init(onCreate: ((Contact) -> Void)? = nil) {
         self.existingContact = nil
+        self.onCreate = onCreate
     }
 
     var body: some View {
@@ -233,7 +238,8 @@ struct ContactEditView: View {
                     birthday: birthdayComponents,
                     notes: notes
                 )
-                _ = try environment.repository.createContact(draft)
+                let created = try environment.repository.createContact(draft)
+                onCreate?(created)
             }
             dismiss()
         } catch {
