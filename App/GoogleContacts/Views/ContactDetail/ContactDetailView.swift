@@ -50,7 +50,17 @@ struct ContactDetailView: View {
             if !contact.addresses.isEmpty {
                 Section("Address") {
                     ForEach(contact.addresses) { address in
-                        Text(address.formattedValue.isEmpty ? [address.street, address.city, address.region, address.postalCode, address.country].filter { !$0.isEmpty }.joined(separator: ", ") : address.formattedValue)
+                        let text = displayText(for: address)
+                        if let url = mapsURL(for: text) {
+                            // Links in a Form render like buttons, which center multi-line text.
+                            Link(destination: url) {
+                                Text(text)
+                                    .multilineTextAlignment(.leading)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        } else {
+                            Text(text)
+                        }
                     }
                 }
             }
@@ -107,6 +117,19 @@ struct ContactDetailView: View {
     private func deleteContact() {
         try? environment.repository.delete(contact)
         selectedContact = nil
+    }
+
+    private func displayText(for address: PostalAddress) -> String {
+        address.formattedValue.isEmpty ? [address.street, address.city, address.region, address.postalCode, address.country].filter { !$0.isEmpty }.joined(separator: ", ") : address.formattedValue
+    }
+
+    // Apple Maps universal link: opens the Maps app on iOS/macOS and searches for the address.
+    private func mapsURL(for address: String) -> URL? {
+        let trimmed = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        var components = URLComponents(string: "https://maps.apple.com/")
+        components?.queryItems = [URLQueryItem(name: "q", value: trimmed)]
+        return components?.url
     }
 
     private func formatted(_ components: DateComponents) -> String {
